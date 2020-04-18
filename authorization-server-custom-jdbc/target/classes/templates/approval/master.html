@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <!-- default header name is X-CSRF-TOKEN -->
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>已授权应用管理</title>
+    <link rel="stylesheet" href="../../static/assets/bootstrap/css/bootstrap.min.css"
+          th:href="@{/assets/bootstrap/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" type="text/css" media="screen"
+          href="../../static/assets/DataTables/DataTables-1.10.18/css/dataTables.bootstrap4.min.css"
+          th:href="@{/assets/DataTables/DataTables-1.10.18/css/dataTables.bootstrap4.min.css}"/>
+    <link rel="stylesheet" type="text/css" media="screen"
+          href="../../static/assets/bootstrap-datepicker/css/bootstrap-datepicker.css"
+          th:href="@{/assets/bootstrap-datepicker/css/bootstrap-datepicker.css}"/>      
+    <style type="text/css">
+        .table > tbody > tr > td {
+            text-align: center;
+        }
+
+        /* dataTables表头居中 */
+        .table > thead:first-child > tr:first-child > th {
+            text-align: center;
+        }
+        
+        .top5 { margin-top:5px; }
+		.top7 { margin-top:7px; }
+		.top10 { margin-top:10px; }
+		.top15 { margin-top:15px; }
+		.top17 { margin-top:17px; }
+		.top30 { margin-top:30px; }
+    </style>
+    <script src="../../static/assets/jquery-3.3.1.min.js"
+            th:src="@{/assets/jquery-3.3.1.min.js}"></script>
+</head>
+<body class="hold-transition skin-blue sidebar-mini">
+<nav class="navbar navbar-expand-lg navbar-light static-top sb-navbar">
+    <div class="container">
+        <a class="navbar-brand">OAuth2 后台管理</a>
+        <button class="navbar-toggler navbar-toggler-right collapsed" type="button" data-toggle="collapse"
+                data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+                aria-label="Toggle navigation">
+            Menu
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="navbar-collapse collapse" id="navbarResponsive" style="">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/management/client/">应用接入管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/management/user/">用户管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/management/approval/">已授权应用管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/logout">退出</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<section class="content">
+<div class="row top10">
+    <form class="form-inline col-sm-11" id="search_form">
+        <div class="form-group ">
+            <input class="form-control" placeholder="clientId" id="para_clientId">
+        </div>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <button type="button" id="query" class="btn btn-success query">查询</button>
+    </form>
+</div>
+
+<div class="row top10">
+    <div class="content-wrapper col-md-12">
+            <!-- Main content -->
+            <section class="content">
+            	<div class="table-responsive">
+	                <table id="myTable" class="table table-striped table-bordered responsive table-hover">
+	                    <thead>
+		                    <tr>
+		                        <th width="15%" class="min-mobile-l">userId</th>
+		                        <th width="15%" class="min-mobile-l">clientId</th>
+		                        <th width="15%" class="min-mobile-l">scope</th>
+		                        <th width="10%" class="min-mobile-l">status</th>
+		                        <th width="15%" class="min-mobile-l">到期时间</th>
+		                        <th width="15%" class="min-mobile-l">最后修改时间</th>
+		                        <th width="10%" class="min-mobile-l">操作</th>
+		                    </tr>
+	                    </thead>
+	                </table>
+	             </div>   
+            </section>		           
+       </div>
+   </div>		
+</section>
+<!-- /.content-wrapper -->
+<footer class="main-footer">
+</footer>
+
+<script src="../../static/assets/bootstrap/js/bootstrap.min.js"
+        th:src="@{/assets/bootstrap/js/bootstrap.min.js}"></script>
+<script src="../../static/assets/moment-with-locales.min.js"
+        th:src="@{/assets/moment-with-locales.min.js}"></script>
+<script th:src="@{/assets/localforage.min.js}" src="../static/assets/localforage.min.js"></script>
+
+<script type="text/javascript" charset="utf8" src="../../static/assets/DataTables/datatables.min.js"
+        th:src="@{/assets/DataTables/datatables.min.js}"></script>
+<script type="text/javascript" charset="utf8"
+        src="../../static/assets/DataTables/DataTables-1.10.18/js/dataTables.bootstrap4.min.js"
+        th:src="@{/assets/DataTables/DataTables-1.10.18/js/dataTables.bootstrap4.min.js}"></script>
+<script type="text/javascript" charset="utf8"
+        src="../../static/assets/bootstrap-datepicker/js/bootstrap-datepicker.min.js"
+        th:src="@{/assets/bootstrap-datepicker/js/bootstrap-datepicker.min.js}"></script>
+<script type="text/javascript" charset="utf8"
+        src="../../static/assets/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js"
+        th:src="@{/assets/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js}"></script>        
+<th:block th:inline="javascript">
+    <script>
+		//(new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2006-07-02 08:09:04.423 
+		//(new Date()).Format("yyyy-M-d h:m:s.S")      ==> 2006-7-2 8:9:4.18 
+        Date.prototype.Format = function (fmt) { //author: meizz 
+			 var o = {
+			     "M+": this.getMonth() + 1, //月份 
+			     "d+": this.getDate(), //日 
+			     "h+": this.getHours(), //小时 
+			     "m+": this.getMinutes(), //分 
+			     "s+": this.getSeconds(), //秒 
+			     "q+": Math.floor((this.getMonth() + 3) / 3), //季度 
+			     "S": this.getMilliseconds() //毫秒 
+			 };
+			 if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+			 for (var k in o)
+			 if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+			 return fmt;
+		}
+		
+        $(document).ready(function () {
+
+        	var token = $("meta[name='_csrf']").attr("content");
+        	var header = $("meta[name='_csrf_header']").attr("content");
+        	
+        	$(document).ajaxSend(function(e,xhr,options){
+        		xhr.setRequestHeader(header,token);
+        	});
+        	//提示信息
+            var lang = {
+                "sProcessing": "处理中...",
+                "sLengthMenu": "每页 _MENU_ 项",
+                "sZeroRecords": "没有匹配结果",
+                "sInfo": "当前显示第 _START_ 至 _END_ 项，共 _TOTAL_ 项。",
+                "sInfoEmpty": "当前显示第 0 至 0 项，共 0 项",
+                "sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+                "sInfoPostFix": "",
+                "sSearch": "搜索:",
+                "sUrl": "",
+                "sEmptyTable": "表中数据为空",
+                "sLoadingRecords": "载入中...",
+                "sInfoThousands": ",",
+                "oPaginate": {
+                    "sFirst": "首页",
+                    "sPrevious": "上页",
+                    "sNext": "下页",
+                    "sLast": "末页",
+                    "sJump": "跳转"
+                },
+                "oAria": {
+                    "sSortAscending": ": 以升序排列此列",
+                    "sSortDescending": ": 以降序排列此列"
+                }
+            };
+        	
+            var table = $('#myTable').DataTable({
+            	language:lang,  //提示信息
+                autoWidth: false,  //禁用自动调整列宽
+                stripeClasses: ["odd", "even"],  //为奇偶行加上样式，兼容不支持CSS伪类的场合
+                processing: true,  //隐藏加载提示,自行处理
+                serverSide: false,  //启用服务器端分页
+                searching: false,  //禁用原生搜索
+                retrieve: true,
+                orderMulti: false,  //启用多列排序
+                order: [],  //取消默认排序查询,否则复选框一列会出现小箭头
+                renderer: "bootstrap",  //渲染样式：Bootstrap和jquery-ui
+                pagingType: "simple_numbers",  //分页样式：simple,simple_numbers,full,full_numbers
+                ajax :"/management/approval/data?clientId="+$("#para_clientId").val(),     
+                columns: [
+                    {data: 'userId', bSortable: false},
+                    {data: 'clientId', bSortable: false},
+                    {data: 'scope', bSortable: false},
+                    {data: 'status', bSortable: false},
+                    {
+                        data: 'expiresAt',
+                        render: function (data, type, row) {
+                        	return new Date(data).Format("yyyy-MM-dd hh:mm:ss");  
+                        }
+                    },
+                    {
+                        data: 'lastUpdatedAt',
+                        render: function (data, type, row) {
+                        	return new Date(data).Format("yyyy-MM-dd hh:mm:ss");  
+                        }
+                    }
+                ],
+                columnDefs: [
+                    {
+                        "targets": [6],
+                        "data": "id",
+                        "render": function (data, type, row, meta) {
+                            var btnString = "<button class='btn btn-danger btn-sm btn-status' data-approval-id='" + data + "'>撤销授权</button>";
+                            return btnString;
+                        }
+                    }
+                ]
+            });
+
+            $("#myTable").on("click", ".btn-status", function () {
+                var approval_id = $(this).data("approval-id");
+               
+                $.ajax({
+                    type: 'GET',
+                    url: '/management/approval/revoke/'+approval_id,
+                    success: function (result) {
+                    	if(result.status == 1){
+                    		alert("撤销成功!");
+                    		table.ajax.reload(null, false); // 刷新表格数据，分页信息不会重置
+                        } else {
+                        	alert("撤销失败!");
+                        	console.log('errorCode：',result.errorCode);
+                        	console.log('errorMessage：',result.errorMessage);
+                        }  
+                    }
+                });
+
+            });
+           
+            //点击查询  
+    	    $('button.query').on("click", function() {
+    	    	 table.ajax.url("/management/approval/data?clientId="+$("#para_clientId").val()).load();
+    	    });
+        });
+    </script>
+</th:block>
+</body>
+</html>

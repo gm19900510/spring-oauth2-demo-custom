@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <!-- default header name is X-CSRF-TOKEN -->
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>用户管理</title>
+    <link rel="stylesheet" href="../../static/assets/bootstrap/css/bootstrap.min.css"
+          th:href="@{/assets/bootstrap/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" type="text/css" media="screen"
+          href="../../static/assets/DataTables/DataTables-1.10.18/css/dataTables.bootstrap4.min.css"
+          th:href="@{/assets/DataTables/DataTables-1.10.18/css/dataTables.bootstrap4.min.css}"/>
+    <link rel="stylesheet" type="text/css" media="screen"
+          href="../../static/assets/bootstrap-datepicker/css/bootstrap-datepicker.css"
+          th:href="@{/assets/bootstrap-datepicker/css/bootstrap-datepicker.css}"/>      
+    <style type="text/css">
+        .table > tbody > tr > td {
+            text-align: center;
+        }
+
+        /* dataTables表头居中 */
+        .table > thead:first-child > tr:first-child > th {
+            text-align: center;
+        }
+        
+        .top5 { margin-top:5px; }
+		.top7 { margin-top:7px; }
+		.top10 { margin-top:10px; }
+		.top15 { margin-top:15px; }
+		.top17 { margin-top:17px; }
+		.top30 { margin-top:30px; }
+    </style>
+    <script src="../../static/assets/jquery-3.3.1.min.js"
+            th:src="@{/assets/jquery-3.3.1.min.js}"></script>
+</head>
+<body class="hold-transition skin-blue sidebar-mini">
+<nav class="navbar navbar-expand-lg navbar-light static-top sb-navbar">
+    <div class="container">
+        <a class="navbar-brand">OAuth2 后台管理</a>
+        <button class="navbar-toggler navbar-toggler-right collapsed" type="button" data-toggle="collapse"
+                data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+                aria-label="Toggle navigation">
+            Menu
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="navbar-collapse collapse" id="navbarResponsive" style="">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/management/client/">应用接入管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/management/user/">用户管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/management/approval/">已授权应用管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/logout">退出</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<section class="content">
+<div class="row top10">
+    <form class="form-inline col-sm-11" id="search_form">
+        <div class="form-group ">
+            <input class="form-control" placeholder="username" id="para_username">
+        </div>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <button type="button" id="query" class="btn btn-success query">查询</button>
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <button type="button" class="btn btn-info add" id="createNew">添加新用户</button>
+    </form>
+</div>
+
+<div class="row top10">
+    <div class="content-wrapper col-md-12">
+            <!-- Main content -->
+            <section class="content">
+            	<div class="table-responsive">
+	                <table id="myTable" class="table table-striped table-bordered responsive table-hover">
+	                    <thead>
+		                    <tr>
+		                        <th width="5%" class="min-mobile-l">id</th>
+		                        <th width="15%" class="min-mobile-l">username</th>
+		                        <th width="15%" class="min-mobile-l">nickname</th>
+		                        <th width="20%" class="min-mobile-l">roles</th>
+		                        <th width="10%" class="min-mobile-l">状态</th>
+		                        <th width="10%" class="min-mobile-l">创建时间</th>
+		                        <th width="15%" class="min-mobile-l">操作</th>
+		                    </tr>
+	                    </thead>
+	                </table>
+	             </div>   
+            </section>
+		            <section class="content">
+		                <form class="d-none" id="detailsForm">
+		                    <input type="hidden" value="" id="id" name="id"/>
+		                    <div class="form-group row">
+		                        <label for="username" class="col-2 control-label text-right">username</label>
+		                        <div class="col-6">
+		                            <input type="text" class="form-control" id="username" placeholder="username"
+		                                   required="required" name="username"/>
+		                        </div>
+		                    </div>
+		                     <div class="form-group row">
+		                        <label for="password" class="col-2 col-form-label text-right">密　码</label>
+		                        <div class="col-6">
+		                            <input type="password" name="password" class="form-control" id="password"
+		                                   required="required" autocomplete='tel'
+		                                   placeholder="密　码"/>
+		                            <i class="fa fa-lock"></i>
+		                        </div>
+		                    </div>
+		                    <div class="form-group row">
+		                        <label for="confirmPassword" class="col-2 col-form-label text-right">确　认</label>
+		                        <div class="col-6">
+		                            <input type="password" name="confirmPassword" class="form-control" id="confirmPassword"
+		                                   required="required" autocomplete='tel'
+		                                   placeholder="确认密码"/>
+		                            <i class="fa fa-lock"></i>
+		                        </div>
+		                    </div>
+		                    <div class="form-group row">
+		                        <label for="nickname" class="col-2 control-label text-right">nickname</label>
+		                        <div class="col-6">
+		                            <input type="text" class="form-control" id="nickname" placeholder="nickname"
+		                                   required="required" name="nickname"/>
+		                        </div>
+		                    </div>
+							<div class="form-group row">
+		                        <label for="email" class="col-2 control-label text-right">email</label>
+		                        <div class="col-6">
+		                            <input type="text" class="form-control" id="email" placeholder="email"
+		                                   required="required" name="email"/>
+		                        </div>
+		                    </div>
+		                    <div class="form-group row">
+		                        <label for="roles" class="col-2 control-label text-right">roles</label>
+		                        <div class="col-6">
+		                        	<select multiple class="form-control" name="roles" id="roles" size="3">
+										<option th:each="role:${roles}" th:value="${role.id}" th:text="${role.roleName}"></option>
+				                  	</select>
+		                        </div>
+		                    </div>
+		                    <div class="form-group row">
+		                        <label class="col-2 control-label"></label>
+		                        <div class="col-6" style="text-align:center">
+		                            <button type="submit" class="btn btn-info mr-5" id="update">保存</button>
+		                        </div>
+		                    </div>
+		                </form>
+		            </section>
+   
+		        </div>
+		    </div>
+		
+</section>
+<!-- /.content-wrapper -->
+<footer class="main-footer">
+</footer>
+
+<script src="../../static/assets/bootstrap/js/bootstrap.min.js"
+        th:src="@{/assets/bootstrap/js/bootstrap.min.js}"></script>
+<script src="../../static/assets/moment-with-locales.min.js"
+        th:src="@{/assets/moment-with-locales.min.js}"></script>
+<script th:src="@{/assets/localforage.min.js}" src="../static/assets/localforage.min.js"></script>
+
+<script type="text/javascript" charset="utf8" src="../../static/assets/DataTables/datatables.min.js"
+        th:src="@{/assets/DataTables/datatables.min.js}"></script>
+<script type="text/javascript" charset="utf8"
+        src="../../static/assets/DataTables/DataTables-1.10.18/js/dataTables.bootstrap4.min.js"
+        th:src="@{/assets/DataTables/DataTables-1.10.18/js/dataTables.bootstrap4.min.js}"></script>
+<script type="text/javascript" charset="utf8"
+        src="../../static/assets/bootstrap-datepicker/js/bootstrap-datepicker.min.js"
+        th:src="@{/assets/bootstrap-datepicker/js/bootstrap-datepicker.min.js}"></script>
+<script type="text/javascript" charset="utf8"
+        src="../../static/assets/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js"
+        th:src="@{/assets/bootstrap-datepicker/locales/bootstrap-datepicker.zh-CN.min.js}"></script>        
+<th:block th:inline="javascript">
+    <script>
+		//(new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2006-07-02 08:09:04.423 
+		//(new Date()).Format("yyyy-M-d h:m:s.S")      ==> 2006-7-2 8:9:4.18 
+        Date.prototype.Format = function (fmt) { //author: meizz 
+			 var o = {
+			     "M+": this.getMonth() + 1, //月份 
+			     "d+": this.getDate(), //日 
+			     "h+": this.getHours(), //小时 
+			     "m+": this.getMinutes(), //分 
+			     "s+": this.getSeconds(), //秒 
+			     "q+": Math.floor((this.getMonth() + 3) / 3), //季度 
+			     "S": this.getMilliseconds() //毫秒 
+			 };
+			 if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+			 for (var k in o)
+			 if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+			 return fmt;
+		}
+		
+        function formatStatus(cellValue, options, rowObject) {
+            if (cellValue === null || cellValue === "") {
+                return "";
+            } else if (Number(cellValue) == 0) {
+                return "启用中";
+            } else {
+                return "已禁用";
+            }
+        }
+    
+        $(document).ready(function () {
+
+        	var token = $("meta[name='_csrf']").attr("content");
+        	var header = $("meta[name='_csrf_header']").attr("content");
+        	
+        	$(document).ajaxSend(function(e,xhr,options){
+        		xhr.setRequestHeader(header,token);
+        	});
+        	//提示信息
+            var lang = {
+                "sProcessing": "处理中...",
+                "sLengthMenu": "每页 _MENU_ 项",
+                "sZeroRecords": "没有匹配结果",
+                "sInfo": "当前显示第 _START_ 至 _END_ 项，共 _TOTAL_ 项。",
+                "sInfoEmpty": "当前显示第 0 至 0 项，共 0 项",
+                "sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+                "sInfoPostFix": "",
+                "sSearch": "搜索:",
+                "sUrl": "",
+                "sEmptyTable": "表中数据为空",
+                "sLoadingRecords": "载入中...",
+                "sInfoThousands": ",",
+                "oPaginate": {
+                    "sFirst": "首页",
+                    "sPrevious": "上页",
+                    "sNext": "下页",
+                    "sLast": "末页",
+                    "sJump": "跳转"
+                },
+                "oAria": {
+                    "sSortAscending": ": 以升序排列此列",
+                    "sSortDescending": ": 以降序排列此列"
+                }
+            };
+            var table = $('#myTable').DataTable({
+            	language:lang,  //提示信息
+                autoWidth: false,  //禁用自动调整列宽
+                stripeClasses: ["odd", "even"],  //为奇偶行加上样式，兼容不支持CSS伪类的场合
+                processing: true,  //隐藏加载提示,自行处理
+                serverSide: true,  //启用服务器端分页
+                searching: false,  //禁用原生搜索
+                retrieve: true,
+                orderMulti: false,  //启用多列排序
+                order: [],  //取消默认排序查询,否则复选框一列会出现小箭头
+                renderer: "bootstrap",  //渲染样式：Bootstrap和jquery-ui
+                pagingType: "simple_numbers",  //分页样式：simple,simple_numbers,full,full_numbers
+                columnDefs: [{
+                    //"targets": 'nosort',  //列的样式名
+                    'targets' : [1,2,3,4,5,8],//第四列禁止排序
+                    "orderable": false    //包含上样式名‘nosort’的禁止排序
+                }],
+                ajax: function (data, callback, settings) {
+                    //封装请求参数
+                    var param = {};
+                    param.size = data.length;//页面显示记录条数，在页面显示每页显示多少项的时候
+                    param.page = (data.start / data.length);//当前页码
+
+                    if(data.order.length == 0) {
+                    	param.sort = 'create_time,asc';
+                    } else {
+                    	param.sort = data.columns[data.order[0].column].data+","+data.order[0].dir;
+                    }
+                    param.username = $("#para_username").val()
+                    //ajax请求数据
+                    $.ajax({
+                        type: "POST",
+                        url: "/management/user/data",
+                        cache: false,  //禁用缓存
+                        data: param,  //传入组装的参数
+                        dataType: "json",
+                        success: function (result) {
+                            if(result.status == 1){
+                            	//setTimeout仅为测试延迟效果
+                                setTimeout(function () {
+                                    //封装返回数据
+                                    var returnData = {};
+                                    returnData.draw = data.draw;//这里直接自行返回了draw计数器,应该由后台返回
+                                    returnData.recordsTotal = result.data.totalElements;//返回数据全部记录
+                                    returnData.recordsFiltered = result.data.totalElements;//后台不实现过滤功能，每次查询均视作全部结果
+                                    returnData.data = result.data.content;//返回的数据列表
+                                    console.log(returnData);
+                                    //调用DataTables提供的callback方法，代表数据已封装完成并传回DataTables进行渲染
+                                    //此时的数据需确保正确无误，异常判断应在执行此回调前自行处理完毕
+                                    callback(returnData);
+                                }, 200);
+                            } else {
+                            	console.log('errorCode：',result.errorCode);
+                            	console.log('errorMessage：',result.errorMessage);
+                            }
+                        }
+                    });
+                },
+                columns: [
+                    {data: 'id', bSortable: false},
+                    {data: 'username'},
+                    {data: 'nickname', bSortable: false},
+                    {data: 'role_names', bSortable: false},
+                    {
+                        data: 'visiable',
+                        bSortable: false,
+                        render: function (data, type, row) {
+                            return formatStatus(data);
+                        }
+                    },
+                    {
+                        data: 'create_time',
+                        render: function (data, type, row) {
+                        	return new Date(data).Format("yyyy-MM-dd hh:mm:ss");  
+                        }
+                    }
+                ],
+                columnDefs: [
+                    {
+                        "targets": [6],
+                        "data": "id",
+                        "render": function (data, type, row, meta) {
+                            var btnString = "";
+                            if (row.visiable < 0) {
+                                btnString = "<button class='btn btn-secondary btn-sm btn-status' data-client-id='" + data + "' data-client-visiable='启用'>启用</button>";
+                            } else {
+                                btnString = "<button class='btn btn-success btn-sm btn-status' data-client-id='" + data + "' data-client-visiable='禁用'>禁用</button>";
+                            }
+                            btnString += "&nbsp;&nbsp;&nbsp;<button class='btn btn-primary btn-sm btn-edit' data-client-id='" + data + "'>编辑</button>";
+                            btnString += "&nbsp;&nbsp;&nbsp;<button class='btn btn-danger btn-sm btn-status' data-client-id='" + data + "' data-client-visiable='删除'>删除</button>";
+                            return btnString;
+                        }
+                    }
+                ]
+            });
+
+            $("#createNew").click(function () {
+                $("#id").val("0");
+                $("#username").val('');
+                $("#password").val('');
+                $("#nickname").val('');
+                $("#email").val("");
+                $("#roles").val("");
+                $("#detailsForm").removeClass("d-none");
+                $("#message").removeClass("bg-danger").html("");
+                $("#message").removeClass("bg-success").html("");
+            });
+
+            $("#myTable").on("click", ".btn-edit", function () {
+                var clientId = $(this).data("client-id");
+                $("#detailsForm").removeClass("d-none");
+                var url = "/management/user/details/" + clientId;
+                $.get(url, function (result) {
+                	if(result.status == 1){
+                        var data = result.data;
+                        $("#id").val(data.id);
+                        $("#username").val(data.username);
+                        $("#password").val('');
+                        $("#confirmPassword").val('')
+                        $("#nickname").val(data.nickname);
+                        $("#email").val(data.email);
+                      
+                        $('#role_names').val('');
+                        var item_mode = ','+data.role_ids+','; //从后台传过来的值
+                        $('#roles option').each(function () {
+                            if (item_mode.indexOf(','+this.value+',')!=-1)
+                            	this.selected=true;
+                        });
+                        
+                        $("#message").removeClass("bg-danger").html("");
+                        $("#message").removeClass("bg-success").html("");   
+                    } else {
+                    	console.log('errorCode：',result.errorCode);
+                    	console.log('errorMessage：',result.errorMessage);
+                    }
+                });
+            });
+
+            function trimBlank(str) {
+                return str.replace(/(^\s*)|(\s*$)/g, '')
+            }
+            $("#detailsForm").on("submit", function (e) {
+            	if ($("#username").val() == null || trimBlank($("#username").val()) == '') {
+                    $("#username").focus();
+                    e.preventDefault();
+                    return false;
+                }
+                if ($("#password").val() == null || $("#password").val().trim() == '') {
+                    $("#password").focus();
+                    e.preventDefault();
+                    return false;
+                }
+                if ($("#confirmPassword").val() == null || $("#confirmPassword").val().trim() == '') {
+                    $("#confirmPassword").focus();
+                    e.preventDefault();
+                    return false;
+                }
+                if ($("#confirmPassword").val() != $("#password").val()) {
+                    $("#confirmPassword").focus();
+                    e.preventDefault();
+                    return false;
+                }
+                $.ajax({
+                    type: 'POST',
+                    url: '/management/user/edit',
+                    data: $("#detailsForm").serialize(),
+                    success: function (result) {
+                    	if(result.status == 1){
+                            table.ajax.reload(null, false); // 刷新表格数据，分页信息不会重置
+                            $("#createNew").trigger("click");
+                            $("#detailsForm").addClass("d-none");
+                            alert("保存成功!");
+                        } else {
+                        	alert("保存失败!");
+                        	console.log('errorCode：',result.errorCode);
+                        	console.log('errorMessage：',result.errorMessage);
+                        }
+                    }
+                });
+                return false;
+            });
+
+
+            $("#myTable").on("click", ".btn-status", function () {
+                var clientId = $(this).data("client-id");
+                var visiable = $(this).data("client-visiable");
+                var url = '/management/user/sign/'+clientId;
+                if(visiable == '禁用') {
+                	 url += '/-1';
+                } else if(visiable == '启用') {
+                	url += '/0';
+                } else if(visiable == '删除') {
+                	url += '/1';
+                }
+                
+                $.ajax({
+                    type: 'GET',
+                    url: url,
+                    success: function (result) {
+                    	if(result.status == 1){
+                    		alert(visiable + "成功!");
+                    		table.ajax.reload(null, false); // 刷新表格数据，分页信息不会重置
+                        } else {
+                        	alert(visiable + "失败!");
+                        	console.log('errorCode：',result.errorCode);
+                        	console.log('errorMessage：',result.errorMessage);
+                        }  
+                    }
+                });
+
+            });
+
+            //点击查询  
+    	    $('button.query').on("click", function() {
+    	    	table.ajax.reload(null, true); // 刷新表格数据，分页信息不会重置
+    	    });
+        });
+    </script>
+</th:block>
+</body>
+</html>
